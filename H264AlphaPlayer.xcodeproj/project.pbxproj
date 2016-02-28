@@ -124,6 +124,8 @@
 		3C9DF30E1C82904A00D96CE2 /* 7zMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF2A41C82904A00D96CE2 /* 7zMain.c */; };
 		3C9DF3101C82909400D96CE2 /* libcompression.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF30F1C82909400D96CE2 /* libcompression.tbd */; };
 		3C9DF3121C82909A00D96CE2 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF3111C82909A00D96CE2 /* libz.tbd */; };
+		3CBEDAE21C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
+		3CBEDAE31C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -263,6 +265,8 @@
 		3C9DF2A41C82904A00D96CE2 /* 7zMain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = 7zMain.c; sourceTree = "<group>"; };
 		3C9DF30F1C82909400D96CE2 /* libcompression.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcompression.tbd; path = usr/lib/libcompression.tbd; sourceTree = SDKROOT; };
 		3C9DF3111C82909A00D96CE2 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		3CBEDAE01C82956C00627C71 /* AVAnimatorH264AlphaPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVAnimatorH264AlphaPlayer.h; sourceTree = "<group>"; };
+		3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AVAnimatorH264AlphaPlayer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -358,8 +362,10 @@
 				3C9DF23F1C82904900D96CE2 /* AVAnimatorMediaPrivate.h */,
 				3C9DF2401C82904900D96CE2 /* AVAnimatorMediaRendererProtocol.h */,
 				3C9DF2411C82904900D96CE2 /* AVAnimatorOpenGLView.h */,
-				3C9DF2421C82904900D96CE2 /* AVAnimatorOpenGLView.m */,
 				3C9DF2431C82904900D96CE2 /* AVAnimatorOpenGLViewPrivate.h */,
+				3C9DF2421C82904900D96CE2 /* AVAnimatorOpenGLView.m */,
+				3CBEDAE01C82956C00627C71 /* AVAnimatorH264AlphaPlayer.h */,
+				3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */,
 				3C9DF2441C82904900D96CE2 /* AVAnimatorView.h */,
 				3C9DF2451C82904900D96CE2 /* AVAnimatorView.m */,
 				3C9DF2461C82904900D96CE2 /* AVAnimatorViewPrivate.h */,
@@ -596,6 +602,7 @@
 				3C9DF2DF1C82904A00D96CE2 /* maxvid_deltas.m in Sources */,
 				3C9DF2101C828FAF00D96CE2 /* AppDelegate.m in Sources */,
 				3C9DF2B91C82904A00D96CE2 /* AVAssetFrameDecoder.m in Sources */,
+				3CBEDAE21C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */,
 				3C9DF2F11C82904A00D96CE2 /* 7zFile.c in Sources */,
 				3C9DF2CF1C82904A00D96CE2 /* AVMvidFrameDecoder.m in Sources */,
 				3C9DF2F31C82904A00D96CE2 /* 7zIn.c in Sources */,
@@ -661,6 +668,7 @@
 				3C9DF3081C82904A00D96CE2 /* Ppmd8.c in Sources */,
 				3C9DF2E61C82904A00D96CE2 /* movdata.c in Sources */,
 				3C9DF2EA1C82904A00D96CE2 /* SegmentedMappedData.m in Sources */,
+				3CBEDAE31C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */,
 				3C9DF2EC1C82904A00D96CE2 /* 7zBuf.c in Sources */,
 				3C9DF2DA1C82904A00D96CE2 /* libapng.c in Sources */,
 				3C9DF2F41C82904A00D96CE2 /* 7zIn.c in Sources */,
@@ -883,6 +891,7 @@
 				3C9DF22C1C828FAF00D96CE2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		3C9DF22D1C828FAF00D96CE2 /* Build configuration list for PBXNativeTarget "H264AlphaPlayerTests" */ = {
 			isa = XCConfigurationList;
@@ -891,6 +900,7 @@
 				3C9DF22F1C828FAF00D96CE2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
