@@ -39,6 +39,7 @@
 
 // Trivial vertex and fragment shaders
 
+static
 const GLchar *vertShaderCstr =
 "attribute vec4 position; attribute mediump vec4 textureCoordinate;"
 "varying mediump vec2 coordinate;"
@@ -48,6 +49,7 @@ const GLchar *vertShaderCstr =
 "	coordinate = textureCoordinate.xy;"
 "}";
 
+static
 const GLchar *fragShaderCstr =
 "varying highp vec2 coordinate;"
 "uniform sampler2D videoframe;"

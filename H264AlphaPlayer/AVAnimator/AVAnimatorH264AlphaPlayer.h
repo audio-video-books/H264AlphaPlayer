@@ -24,7 +24,20 @@
 + (AVAnimatorH264AlphaPlayer*) aVAnimatorH264AlphaPlayer;
 
 // static ctor : create view with the given dimensions
-+ (AVAnimatorH264AlphaPlayer*) aVAnimatorH264AlphaPlayer:(CGRect)viewFrame;
++ (AVAnimatorH264AlphaPlayer*) aVAnimatorH264AlphaPlayerWithFrame:(CGRect)viewFrame;
+
+// Set this property to indicate the name of the asset to be
+// loaded as a result of calling startAnimator.
+
+@property (nonatomic, copy) NSString *assetFilename;
+
+- (void) startAnimator;
+
+- (void) stopAnimator;
+
+// Invoke this metho to read from the named asset and being loading initial data
+
+- (void) prepareToAnimate;
 
 @end
 

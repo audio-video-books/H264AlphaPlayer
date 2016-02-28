@@ -22,6 +22,8 @@
 
 #import "AVFrame.h"
 
+#import "AVFileUtil.h"
+
 #import <mach/mach.h>
 
 #if __has_feature(objc_arc)
@@ -37,8 +39,11 @@
 
 #import <QuartzCore/CAEAGLLayer.h>
 
+#import "AVAssetFrameDecoder.h"
+
 // Trivial vertex and fragment shaders
 
+static
 const GLchar *vertShaderCstr =
 "attribute vec4 position; attribute mediump vec4 textureCoordinate;"
 "varying mediump vec2 coordinate;"
@@ -48,6 +53,7 @@ const GLchar *vertShaderCstr =
 "	coordinate = textureCoordinate.xy;"
 "}";
 
+static
 const GLchar *fragShaderCstr =
 "varying highp vec2 coordinate;"
 "uniform sampler2D videoframe;"
@@ -85,6 +91,8 @@ enum {
 @property (nonatomic, retain) AVFrame *rgbFrame;
 @property (nonatomic, retain) AVFrame *alphaFrame;
 
+@property (nonatomic, retain) AVAssetFrameDecoder *frameDecoder;
+
 @end
 
 // class AVAnimatorH264AlphaPlayer
@@ -96,6 +104,8 @@ enum {
 @synthesize renderSize = m_renderSize;
 @synthesize rgbFrame = m_rgbFrame;
 @synthesize alphaFrame = m_alphaFrame;
+@synthesize assetFilename = m_assetFilename;
+@synthesize frameDecoder = m_frameDecoder;
 
 - (void) dealloc {
 	// Explicitly release image inside the imageView, the
@@ -105,6 +115,7 @@ enum {
   
 	self.rgbFrame = nil;
 	self.alphaFrame = nil;
+  self.frameDecoder = nil;
   
   // Dealloc OpenGL stuff
 	
@@ -135,10 +146,10 @@ enum {
 #else
   CGRect rect = screen.applicationFrame;
 #endif // TARGET_OS_TV
-  return [AVAnimatorH264AlphaPlayer aVAnimatorH264AlphaPlayer:rect];
+  return [AVAnimatorH264AlphaPlayer aVAnimatorH264AlphaPlayerWithFrame:rect];
 }
 
-+ (AVAnimatorH264AlphaPlayer*) aVAnimatorH264AlphaPlayer:(CGRect)viewFrame
++ (AVAnimatorH264AlphaPlayer*) aVAnimatorH264AlphaPlayerWithFrame:(CGRect)viewFrame
 {
   AVAnimatorH264AlphaPlayer *obj = [[AVAnimatorH264AlphaPlayer alloc] initWithFrame:viewFrame];
 #if __has_feature(objc_arc)
@@ -294,7 +305,7 @@ enum {
     NSAssert(FALSE, @"AVFrame delivered to AVAnimatorOpenGLView does not contain a CoreVideo pixel buffer");
   }
 
-  cvImageBufferRef = frame.cvBufferRef;
+  cvImageBufferRef = rgbFrame.cvBufferRef;
   
   frameWidth = CVPixelBufferGetWidth(cvImageBufferRef);
   frameHeight = CVPixelBufferGetHeight(cvImageBufferRef);
@@ -341,7 +352,7 @@ enum {
   
   // Bind texture, OpenGL already knows about the texture but it could have been created
   // in another thread and it has to be bound in this context in order to sync the
-  // texture for use with this OpenGL context. The next loggin line can be uncommented
+  // texture for use with this OpenGL context. The next logging line can be uncommented
   // to see the actual texture id used internally by OpenGL.
   
   //NSLog(@"bind OpenGL texture %d", CVOpenGLESTextureGetName(textureRef));
@@ -392,7 +403,7 @@ enum {
     NSAssert(worked, @"setupOpenGLMembers failed");
   }
   
-  if (self.frameObj != nil) {
+  if (self.rgbFrame != nil && self.alphaFrame != nil) {
     [self displayFrame];
   } else {
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -559,6 +570,58 @@ enum {
   }
   
   return YES;
+}
+
+- (void) startAnimator
+{
+  if (self.rgbFrame == nil || self.alphaFrame == nil) {
+    NSAssert(FALSE, @"player must be prepared before startAnimator can be invoked");
+  }
+}
+
+- (void) stopAnimator
+{
+  self.rgbFrame = nil;
+  self.alphaFrame = nil;
+}
+
+// Invoke this metho to read from the named asset and being loading initial data
+
+- (void) prepareToAnimate
+{
+  AVAssetFrameDecoder *frameDecoder;
+  
+  frameDecoder = [AVAssetFrameDecoder aVAssetFrameDecoder];
+  
+  self.frameDecoder = frameDecoder;
+  
+  NSAssert(self.assetFilename, @"assetFilename must be defined when prepareToAnimate is invoked");
+
+  NSString *assetFullPath = [AVFileUtil getQualifiedFilenameOrResource:self.assetFilename];
+  
+  BOOL worked;
+  worked = [frameDecoder openForReading:assetFullPath];
+  
+  if (worked == FALSE) {
+    NSLog(@"error: cannot open RGB+Alpha mixed asset filename \"%@\"", assetFullPath);
+    return;
+    //return FALSE;
+  }
+  
+  worked = [frameDecoder allocateDecodeResources];
+  
+  if (worked == FALSE) {
+    NSLog(@"error: cannot allocate RGB+Alpha mixed decode resources for filename \"%@\"", assetFullPath);
+    return;
+//    return FALSE;
+  }
+  
+  frameDecoder.produceCoreVideoPixelBuffers = TRUE;
+  
+  self.rgbFrame = [frameDecoder advanceToFrame:0];
+  self.alphaFrame = [frameDecoder advanceToFrame:1];
+  
+  [self setNeedsDisplay];
 }
 
 @end
