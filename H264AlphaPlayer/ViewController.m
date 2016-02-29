@@ -20,9 +20,16 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  // Do any additional setup after loading the view, typically from a nib.
   
   AVAnimatorH264AlphaPlayer *player = [AVAnimatorH264AlphaPlayer aVAnimatorH264AlphaPlayerWithFrame:self.view.frame];
+  
+  // Swap AVAnimatorH264AlphaPlayer in place of generic UIView, this results in the player view
+  // getting resized and rotated as needed.
+  
+  UIView *superview = self.view.superview;
+  [self.view removeFromSuperview];
+  self.view = player;
+  [superview addSubview:player];
   
   self.player = player;
   
@@ -30,7 +37,7 @@
   
   [player prepareToAnimate];
   
-  [self.view addSubview:player];
+  //[self.view addSubview:player];
 }
 
 - (void)didReceiveMemoryWarning {

@@ -397,6 +397,8 @@ enum {
 
 - (void)drawRect:(CGRect)rect
 {
+  NSLog(@"drawRect %dx%d", (int)rect.size.width, (int)rect.size.height);
+  
   if (didSetupOpenGLMembers == FALSE) {
     didSetupOpenGLMembers = TRUE;
     BOOL worked = [self setupOpenGLMembers];
@@ -585,7 +587,10 @@ enum {
   self.alphaFrame = nil;
 }
 
-// Invoke this metho to read from the named asset and being loading initial data
+// Invoke this method to read from the named asset and being loading initial data
+
+// FIXME: all this CoreVideo texture buffer reading logic needs to be done on a
+// background thread.
 
 - (void) prepareToAnimate
 {
