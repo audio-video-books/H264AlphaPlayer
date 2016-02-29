@@ -86,6 +86,8 @@ enum {
 
 @property (nonatomic, assign) CGSize renderSize;
 
+@property (nonatomic, assign) int currentFrame;
+
 @property (nonatomic, retain) AVFrame *rgbFrame;
 @property (nonatomic, retain) AVFrame *alphaFrame;
 
@@ -105,6 +107,7 @@ enum {
 @synthesize assetFilename = m_assetFilename;
 @synthesize frameDecoder = m_frameDecoder;
 @synthesize animatorPrepTimer = m_animatorPrepTimer;
+@synthesize currentFrame = m_currentFrame;
 
 - (void) dealloc {
 	// Explicitly release image inside the imageView, the
@@ -638,6 +641,8 @@ enum {
                                                   repeats: FALSE];
   
   [[NSRunLoop currentRunLoop] addTimer: self.animatorPrepTimer forMode: NSDefaultRunLoopMode];
+  
+  self.currentFrame = -1;
 }
 
 // This timer callback method is invoked after the event loop is up and running in the
@@ -645,8 +650,6 @@ enum {
 
 - (void) _prepareToAnimateTimer:(NSTimer*)timer
 {
-  // FIXME: process loading in background thread
-  
   AVAssetFrameDecoder *frameDecoder;
   
   frameDecoder = [AVAssetFrameDecoder aVAssetFrameDecoder];
@@ -678,17 +681,70 @@ enum {
   
   frameDecoder.produceCoreVideoPixelBuffers = TRUE;
   
-  self.rgbFrame = [frameDecoder advanceToFrame:0];
-  self.alphaFrame = [frameDecoder advanceToFrame:1];
+  self.currentFrame = 0;
   
-  [self setNeedsDisplay];
+  __block int currentFrame = self.currentFrame;
+  __block Class c = self.class;
+  __block AVAssetFrameDecoder *frameDecoderBlock = frameDecoder;
+  __weak AVAnimatorH264AlphaPlayer *weakSelf = self;
+  
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    // Execute on background thread with blocks API invocation
+    
+    AVFrame* rgbFrame;
+    AVFrame* alphaFrame;
+    
+    int nextFrame = [c loadFramesInBackgroundThread:currentFrame
+                                       frameDecoder:frameDecoderBlock
+                                           rgbFrame:&rgbFrame
+                                         alphaFrame:&alphaFrame];
+    
+    dispatch_sync(dispatch_get_main_queue(), ^{
+#if defined(DEBUG)
+      NSAssert(rgbFrame, @"rgbFrame");
+      NSAssert(alphaFrame, @"alphaFrame");
+#endif // DEBUG
+      
+      __strong typeof(weakSelf) strongSelf = weakSelf;
+      
+      strongSelf.rgbFrame = rgbFrame;
+      strongSelf.alphaFrame = alphaFrame;
+      
+      strongSelf.currentFrame = nextFrame;
 
-  // Deliver AVAnimatorPreparedToAnimateNotification
-
-  [[NSNotificationCenter defaultCenter] postNotificationName:AVAnimatorPreparedToAnimateNotification
-                                                      object:self];
+      NSLog(@"set H264AlphaPlayer self.currentFrame to %d", strongSelf.currentFrame);
+      
+      [strongSelf setNeedsDisplay];
+      
+      // Deliver AVAnimatorPreparedToAnimateNotification
+      
+      [[NSNotificationCenter defaultCenter] postNotificationName:AVAnimatorPreparedToAnimateNotification
+                                                          object:strongSelf];
+    });
+  });
+  
+  return;
 }
 
++ (int) loadFramesInBackgroundThread:(int)currentFrame
+                        frameDecoder:(AVAssetFrameDecoder*)frameDecoder
+                            rgbFrame:(AVFrame**)rgbFramePtr
+                          alphaFrame:(AVFrame**)alphaFramePtr
+{
+  AVFrame *rgbFrame;
+  AVFrame *alphaFrame;
+  
+  rgbFrame = [frameDecoder advanceToFrame:currentFrame];
+  currentFrame++;
+  alphaFrame = [frameDecoder advanceToFrame:currentFrame];
+  currentFrame++;
+
+  *rgbFramePtr = rgbFrame;
+  *alphaFramePtr = alphaFrame;
+  
+  return currentFrame;
+}
+                 
 @end
 
 #endif // HAS_AVASSET_READ_COREVIDEO_BUFFER_AS_TEXTURE
