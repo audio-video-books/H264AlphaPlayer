@@ -28,6 +28,8 @@
   
   NSAssert(self.carView, @"carView");
   
+  NSAssert(self.carView.superview != nil, @"superview");
+  
   AVAnimatorH264AlphaPlayer *player = self.carView;
   
   // Note that the width x height of the view is not known at this point, because the view is being
@@ -63,9 +65,9 @@
   
   NSLog(@"animatorPreparedNotification %@ : videoSize %d x %d", file, (int)videoSize.width, (int)videoSize.height);
   
-  NSLog(@"self.carView : %d x %d", (int)self.carView.frame.size.width, (int)self.carView.frame.size.height);
-  
   NSLog(@"self.carView origin %d,%d", (int)self.carView.frame.origin.x, (int)self.carView.frame.origin.y);
+  
+  NSLog(@"self.carView : %d x %d", (int)self.carView.frame.size.width, (int)self.carView.frame.size.height);
   
   [self.carView startAnimator];
   
