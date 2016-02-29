@@ -12,37 +12,64 @@
 
 @interface ViewController ()
 
-@property (nonatomic, retain) AVAnimatorH264AlphaPlayer *player;
+@property (nonatomic, retain) IBOutlet AVAnimatorH264AlphaPlayer *carView;
 
 @end
 
 @implementation ViewController
 
+- (void) dealloc
+{
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)viewDidLoad {
   [super viewDidLoad];
   
-  AVAnimatorH264AlphaPlayer *player = [AVAnimatorH264AlphaPlayer aVAnimatorH264AlphaPlayerWithFrame:self.view.frame];
+  NSAssert(self.carView, @"carView");
   
-  // Swap AVAnimatorH264AlphaPlayer in place of generic UIView, this results in the player view
-  // getting resized and rotated as needed.
+  AVAnimatorH264AlphaPlayer *player = self.carView;
   
-  UIView *superview = self.view.superview;
-  [self.view removeFromSuperview];
-  self.view = player;
-  [superview addSubview:player];
+  // Note that the width x height of the view is not known at this point, because the view is being
+  // loaded and it can be resized or rotated to fit initial app launch state.
   
-  self.player = player;
+//  NSLog(@"self.carView %dx%d", (int)player.bounds.size.width, (int)player.bounds.size.height);
   
   player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
+ 
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(animatorPreparedNotification:)
+                                               name:AVAnimatorPreparedToAnimateNotification
+                                             object:player];
   
   [player prepareToAnimate];
-  
-  //[self.view addSubview:player];
 }
 
-- (void)didReceiveMemoryWarning {
-  [super didReceiveMemoryWarning];
-  // Dispose of any resources that can be recreated.
+// Invoked once a specific media object is ready to animate.
+
+- (void)animatorPreparedNotification:(NSNotification*)notification {
+  AVAnimatorH264AlphaPlayer *player = notification.object;
+  
+  [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                  name:AVAnimatorPreparedToAnimateNotification
+                                                object:player];
+  
+  AVAssetFrameDecoder *frameDecoder = (AVAssetFrameDecoder*) player.frameDecoder;
+  NSString *file = player.assetFilename;
+  
+  // Size of movie is available now
+  
+  CGSize videoSize = CGSizeMake(frameDecoder.width, frameDecoder.height);
+  
+  NSLog(@"animatorPreparedNotification %@ : videoSize %d x %d", file, (int)videoSize.width, (int)videoSize.height);
+  
+  NSLog(@"self.carView : %d x %d", (int)self.carView.frame.size.width, (int)self.carView.frame.size.height);
+  
+  NSLog(@"self.carView origin %d,%d", (int)self.carView.frame.origin.x, (int)self.carView.frame.origin.y);
+  
+  [self.carView startAnimator];
+  
+  return;
 }
 
 @end

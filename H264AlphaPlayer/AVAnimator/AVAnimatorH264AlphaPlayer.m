@@ -39,8 +39,6 @@
 
 #import <QuartzCore/CAEAGLLayer.h>
 
-#import "AVAssetFrameDecoder.h"
-
 // Trivial vertex and fragment shaders
 
 static
@@ -91,7 +89,7 @@ enum {
 @property (nonatomic, retain) AVFrame *rgbFrame;
 @property (nonatomic, retain) AVFrame *alphaFrame;
 
-@property (nonatomic, retain) AVAssetFrameDecoder *frameDecoder;
+@property (nonatomic, retain) NSTimer *animatorPrepTimer;
 
 @end
 
@@ -106,6 +104,7 @@ enum {
 @synthesize alphaFrame = m_alphaFrame;
 @synthesize assetFilename = m_assetFilename;
 @synthesize frameDecoder = m_frameDecoder;
+@synthesize animatorPrepTimer = m_animatorPrepTimer;
 
 - (void) dealloc {
 	// Explicitly release image inside the imageView, the
@@ -116,6 +115,10 @@ enum {
 	self.rgbFrame = nil;
 	self.alphaFrame = nil;
   self.frameDecoder = nil;
+  
+  if (self.animatorPrepTimer != nil) {
+    [self.animatorPrepTimer invalidate];
+  }
   
   // Dealloc OpenGL stuff
 	
@@ -594,14 +597,32 @@ enum {
 
 - (void) prepareToAnimate
 {
+  self.animatorPrepTimer = [NSTimer timerWithTimeInterval: 0.10
+                                                   target: self
+                                                 selector: @selector(_prepareToAnimateTimer:)
+                                                 userInfo: NULL
+                                                  repeats: FALSE];
+  
+  [[NSRunLoop currentRunLoop] addTimer: self.animatorPrepTimer forMode: NSDefaultRunLoopMode];
+}
+
+// This timer callback method is invoked after the event loop is up and running in the
+// case where prepareToAnimate is invoked as part of the app startup via viewDidLoad.
+
+- (void) _prepareToAnimateTimer:(NSTimer*)timer
+{
+  // FIXME: process loading in background thread
+  
   AVAssetFrameDecoder *frameDecoder;
   
   frameDecoder = [AVAssetFrameDecoder aVAssetFrameDecoder];
   
   self.frameDecoder = frameDecoder;
   
+  // FIXME: deliver AVAnimatorFailedToLoadNotification in fail case
+  
   NSAssert(self.assetFilename, @"assetFilename must be defined when prepareToAnimate is invoked");
-
+  
   NSString *assetFullPath = [AVFileUtil getQualifiedFilenameOrResource:self.assetFilename];
   
   BOOL worked;
@@ -618,7 +639,7 @@ enum {
   if (worked == FALSE) {
     NSLog(@"error: cannot allocate RGB+Alpha mixed decode resources for filename \"%@\"", assetFullPath);
     return;
-//    return FALSE;
+    //    return FALSE;
   }
   
   frameDecoder.produceCoreVideoPixelBuffers = TRUE;
@@ -627,6 +648,11 @@ enum {
   self.alphaFrame = [frameDecoder advanceToFrame:1];
   
   [self setNeedsDisplay];
+
+  // Deliver AVAnimatorPreparedToAnimateNotification
+
+  [[NSNotificationCenter defaultCenter] postNotificationName:AVAnimatorPreparedToAnimateNotification
+                                                      object:self];
 }
 
 @end

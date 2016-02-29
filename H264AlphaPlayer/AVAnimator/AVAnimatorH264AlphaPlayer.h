@@ -18,6 +18,17 @@
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
 
+#import "AVAssetFrameDecoder.h"
+
+// These notifications are delived from the AVAnimatorH264AlphaPlayer
+
+#define AVAnimatorFailedToLoadNotification @"AVAnimatorFailedToLoadNotification"
+#define AVAnimatorPreparedToAnimateNotification @"AVAnimatorPreparedToAnimateNotification"
+
+#define AVAnimatorDidStartNotification @"AVAnimatorDidStartNotification"
+#define AVAnimatorDidStopNotification @"AVAnimatorDidStopNotification"
+
+
 @interface AVAnimatorH264AlphaPlayer : GLKView
 
 // static ctor : create view that has the screen dimensions
@@ -30,6 +41,8 @@
 // loaded as a result of calling startAnimator.
 
 @property (nonatomic, copy) NSString *assetFilename;
+
+@property (nonatomic, retain) AVAssetFrameDecoder *frameDecoder;
 
 - (void) startAnimator;
 
