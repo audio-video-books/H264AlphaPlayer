@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C5240B11C854CE800FDF725 /* AlphaTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */; };
 		3C9DF20D1C828FAF00D96CE2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF20C1C828FAF00D96CE2 /* main.m */; };
 		3C9DF2101C828FAF00D96CE2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF20F1C828FAF00D96CE2 /* AppDelegate.m */; };
 		3C9DF2131C828FAF00D96CE2 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF2121C828FAF00D96CE2 /* ViewController.m */; };
@@ -139,6 +140,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = AlphaTest_mix.m4v; sourceTree = "<group>"; };
 		3C9DF2081C828FAF00D96CE2 /* H264AlphaPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = H264AlphaPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C9DF20C1C828FAF00D96CE2 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3C9DF20E1C828FAF00D96CE2 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 		3C9DF20B1C828FAF00D96CE2 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */,
 				3C9DF3111C82909A00D96CE2 /* libz.tbd */,
 				3C9DF30F1C82909400D96CE2 /* libcompression.tbd */,
 				3C9DF2301C82901400D96CE2 /* low_car_ANI_mix_30_main.m4v */,
@@ -570,6 +573,7 @@
 				3C9DF21B1C828FAF00D96CE2 /* LaunchScreen.storyboard in Resources */,
 				3C9DF2311C82901400D96CE2 /* low_car_ANI_mix_30_main.m4v in Resources */,
 				3C9DF2181C828FAF00D96CE2 /* Assets.xcassets in Resources */,
+				3C5240B11C854CE800FDF725 /* AlphaTest_mix.m4v in Resources */,
 				3C9DF2161C828FAF00D96CE2 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

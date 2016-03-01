@@ -188,6 +188,10 @@ enum {
 @synthesize animatorPrepTimer = m_animatorPrepTimer;
 @synthesize currentFrame = m_currentFrame;
 
+#if defined(DEBUG)
+@synthesize captureDir = m_captureDir;
+#endif // DEBUG
+
 - (void) dealloc {
 	// Explicitly release image inside the imageView, the
 	// goal here is to get the imageView to drop the
@@ -280,6 +284,7 @@ enum {
   self.opaque = FALSE;
   
   self.clearsContextBeforeDrawing = FALSE;
+  //self.backgroundColor = [UIColor clearColor];
   self.backgroundColor = nil;
   
   // Use 2x scale factor on Retina displays.
@@ -740,6 +745,63 @@ enum {
   if (textureAlphaRef) {
     CFRelease(textureAlphaRef);
   }
+  
+  // If capture dir is defined then grab the rendered state of the OpenGL
+  // buffer and write that to a PNG. This logic is tricky because the
+  // capture must be in terms of the rendered to size and it must
+  // capture the state before the FBO is rendered over the existing
+  // framebuffer to get the pre mixed state.
+
+#if defined(DEBUG)
+  
+  if (self.captureDir != nil) {
+    glFlush();
+    glFinish();
+
+    CGRect mainFrame = self.bounds;
+    
+    int frameX = 0;
+    int frameY = 0;
+    
+    int frameWidth = mainFrame.size.width * self.contentScaleFactor;
+    int frameHeight = mainFrame.size.height * self.contentScaleFactor;
+    
+    CGFrameBuffer *backwardFrameBuffer = [CGFrameBuffer cGFrameBufferWithBppDimensions:32 width:frameWidth height:frameHeight];
+    GLubyte *flatPixels = (GLubyte*)backwardFrameBuffer.pixels;
+    glReadPixels(frameX, frameY, frameWidth, frameHeight, GL_BGRA, GL_UNSIGNED_BYTE, flatPixels);
+    
+    CGFrameBuffer *forwardsFrameBuffer = [CGFrameBuffer cGFrameBufferWithBppDimensions:32 width:frameWidth height:frameHeight];
+    GLubyte *flatPixels2 = (GLubyte*)forwardsFrameBuffer.pixels;
+
+    for(int y1 = 0; y1 < frameHeight; y1++) {
+      for(int x1 = 0; x1 < frameWidth * 4; x1++) {
+        flatPixels2[(frameHeight - 1 - y1) * frameWidth * 4 + x1] = flatPixels[y1 * 4 * frameWidth + x1];
+      }
+    }
+    
+    NSString *tmpDir = self.captureDir;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:self.captureDir]) {
+      [[NSFileManager defaultManager] createDirectoryAtPath:tmpDir
+                                withIntermediateDirectories:FALSE attributes:nil error:nil];
+    }
+    
+    NSString *filename = [NSString stringWithFormat:@"Frame%d.png", (int)(self.currentFrame - 2)/2];    
+    NSString *tmpPNGPath = [tmpDir stringByAppendingPathComponent:filename];
+    
+    CGImageRef imgRef = [forwardsFrameBuffer createCGImageRef];
+    NSAssert(imgRef, @"CGImageRef returned by createCGImageRef is NULL");
+    
+    // Render
+    
+    UIImage *uiImage = [UIImage imageWithCGImage:imgRef];
+    CGImageRelease(imgRef);
+    
+    NSData *data = [NSData dataWithData:UIImagePNGRepresentation(uiImage)];
+    [data writeToFile:tmpPNGPath atomically:YES];
+    NSLog(@"wrote %@ at %d x %d", tmpPNGPath, (int)uiImage.size.width, (int)uiImage.size.height);
+  }
+  
+#endif // DEBUG
 }
 
 // drawRect from UIView, this method is invoked because this view extends GLKView
