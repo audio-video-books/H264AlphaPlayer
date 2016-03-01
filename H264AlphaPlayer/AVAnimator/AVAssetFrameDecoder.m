@@ -28,7 +28,7 @@
 
 #if defined(HAS_AVASSET_CONVERT_MAXVID)
 
-//#define LOGGING
+#define LOGGING
 
 typedef enum
 {
@@ -89,6 +89,8 @@ typedef enum
 @synthesize lastFrame = m_lastFrame;
 
 @synthesize produceCoreVideoPixelBuffers = m_produceCoreVideoPixelBuffers;
+
+@synthesize produceYUV420Buffers = m_produceYUV420Buffers;
 
 - (void) dealloc
 {
@@ -153,8 +155,17 @@ typedef enum
   // ignored alpha channel will be emitted by the decoding process.
   
   NSDictionary *videoSettings;
-  videoSettings = [NSDictionary dictionaryWithObject:
-                   [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey];
+  
+  if (self.produceYUV420Buffers == FALSE) {
+    videoSettings = [NSDictionary dictionaryWithObject:
+                     [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey];
+  } else {
+    // YYYY (plane 0)
+    // UV   (plane 1)
+    
+    videoSettings = [NSDictionary dictionaryWithObject:
+                     [NSNumber numberWithUnsignedInt:kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange] forKey:(id)kCVPixelBufferPixelFormatTypeKey];
+  }
   
   NSArray *videoTracks = [avUrlAsset tracksWithMediaType:AVMediaTypeVideo];
   

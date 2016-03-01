@@ -41,8 +41,35 @@
 
 // Trivial vertex and fragment shaders
 
+enum
+{
+  UNIFORM_Y,
+  UNIFORM_UV,
+  UNIFORM_COLOR_CONVERSION_MATRIX,
+  NUM_UNIFORMS
+};
+GLint uniforms[NUM_UNIFORMS];
+
+// Color Conversion Constants (YUV to RGB) including adjustment from 16-235/16-240 (video range)
+
+// BT.601, which is the standard for SDTV.
+static const GLfloat kColorConversion601[] = {
+		1.164,  1.164, 1.164,
+  0.0, -0.392, 2.017,
+		1.596, -0.813,   0.0,
+};
+
+// BT.709, which is the standard for HDTV.
+static const GLfloat kColorConversion709[] = {
+		1.164,  1.164, 1.164,
+  0.0, -0.213, 2.112,
+		1.793, -0.533,   0.0,
+};
+
+const static BOOL renderBGRA = FALSE;
+
 static
-const GLchar *vertShaderCstr =
+const GLchar *vertShaderBGRACstr =
 "attribute vec4 position; attribute mediump vec4 textureCoordinate;"
 "varying mediump vec2 coordinate;"
 "void main()"
@@ -52,12 +79,40 @@ const GLchar *vertShaderCstr =
 "}";
 
 static
-const GLchar *fragShaderCstr =
+const GLchar *fragShaderBGRACstr =
 "varying highp vec2 coordinate;"
 "uniform sampler2D videoframe;"
 "void main()"
 "{"
 "	gl_FragColor = texture2D(videoframe, coordinate);"
+"}";
+
+static
+const GLchar *vertShaderYUVCstr =
+"attribute vec4 position; attribute mediump vec4 textureCoordinate;"
+"varying mediump vec2 coordinate;"
+"void main()"
+"{"
+"	gl_Position = position;"
+"	coordinate = textureCoordinate.xy;"
+"}";
+
+static
+const GLchar *fragShaderYUVCstr =
+"varying highp vec2 coordinate;"
+"precision mediump float;"
+"uniform sampler2D SamplerY;"
+"uniform sampler2D SamplerUV;"
+"uniform mat3 colorConversionMatrix;"
+"void main()"
+"{"
+"  mediump vec3 yuv;"
+"  lowp vec3 rgb;"
+// Subtract constants to map the video range start at 0
+"  yuv.x = (texture2D(SamplerY, coordinate).r - (16.0/255.0));"
+"  yuv.yz = (texture2D(SamplerUV, coordinate).rg - vec2(0.5, 0.5));"
+"  rgb = colorConversionMatrix * yuv;"
+"  gl_FragColor = vec4(rgb, 1);"
 "}";
 
 enum {
@@ -78,8 +133,14 @@ enum {
   GLuint passThroughProgram;
   
   // A texture cache ref is an opaque type that contains a specific
-  // textured cache.
+  // textured cache. Note that in the case where there are 2 textures
+  // just one cache is needed.
+  
   CVOpenGLESTextureCacheRef textureCacheRef;
+  
+  // Colorspace conversion
+  
+	const GLfloat *_preferredConversion;
   
   BOOL didSetupOpenGLMembers;
 }
@@ -92,6 +153,8 @@ enum {
 @property (nonatomic, retain) AVFrame *alphaFrame;
 
 @property (nonatomic, retain) NSTimer *animatorPrepTimer;
+
+@property (nonatomic, assign) BOOL renderYUVFrames;
 
 @end
 
@@ -211,6 +274,9 @@ enum {
   
   self->didSetupOpenGLMembers = FALSE;
   
+  // Set the default conversion to BT.709, which is the standard for HDTV.
+  self->_preferredConversion = kColorConversion709;
+  
   return;
 }
 
@@ -282,6 +348,15 @@ enum {
   
   // Update uniform values if there are any
   
+  if (renderBGRA) {
+    // Nop
+  } else {
+    // 0 and 1 are the texture IDs of _lumaTexture and _chromaTexture respectively.
+    glUniform1i(uniforms[UNIFORM_Y], 0);
+    glUniform1i(uniforms[UNIFORM_UV], 1);
+    glUniformMatrix3fv(uniforms[UNIFORM_COLOR_CONVERSION_MATRIX], 1, GL_FALSE, _preferredConversion);
+  }
+  
   // Validate program before drawing. This is a good check, but only really necessary in a debug build.
   // DEBUG macro must be defined in your debug configurations if that's not already the case.
 #if defined(DEBUG)
@@ -351,6 +426,23 @@ enum {
   frameHeight = CVPixelBufferGetHeight(cvImageBufferRef);
   bytesPerRow = CVPixelBufferGetBytesPerRow(cvImageBufferRef);
   
+  // Use the color attachment of the pixel buffer to determine the appropriate color conversion matrix.
+  
+  if (renderBGRA) {
+    // BGRA is a nop
+  } else {
+    // YUV depends on colorspace conversion
+    
+    CFTypeRef colorAttachments = CVBufferGetAttachment(cvImageBufferRef, kCVImageBufferYCbCrMatrixKey, NULL);
+    
+    if (colorAttachments == kCVImageBufferYCbCrMatrix_ITU_R_601_4) {
+      _preferredConversion = kColorConversion601;
+    }
+    else {
+      _preferredConversion = kColorConversion709;
+    }
+  }
+  
   if (self->textureCacheRef == NULL) {
     // This should not actually happen, but no specific way to deal with an error here
     return;
@@ -364,47 +456,136 @@ enum {
 
   CVOpenGLESTextureRef textureRef = NULL;
   
-  CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                              self->textureCacheRef,
-                                                              cvImageBufferRef,
-                                                              (CFDictionaryRef) NULL,
-                                                              GL_TEXTURE_2D, // not GL_RENDERBUFFER
-                                                              GL_RGBA,
-                                                              (GLsizei)frameWidth,
-                                                              (GLsizei)frameHeight,
-                                                              GL_BGRA,
-                                                              GL_UNSIGNED_BYTE,
-                                                              0,
-                                                              &textureRef);
-
-  if (textureRef == NULL) {
-    NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
-    return;
-  }
+  CVOpenGLESTextureRef textureUVRef = NULL;
   
-  if (err) {
-    if (textureRef) {
-      CFRelease(textureRef);
+  CVReturn err;
+  
+  if (renderBGRA) {
+    // A single BGRA format texture is created from the input buffer
+    
+    err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                       self->textureCacheRef,
+                                                       cvImageBufferRef,
+                                                       (CFDictionaryRef) NULL,
+                                                       GL_TEXTURE_2D, // not GL_RENDERBUFFER
+                                                       GL_RGBA,
+                                                       (GLsizei)frameWidth,
+                                                       (GLsizei)frameHeight,
+                                                       GL_BGRA,
+                                                       GL_UNSIGNED_BYTE,
+                                                       0,
+                                                       &textureRef);
+    
+    if (textureRef == NULL) {
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
+      return;
     }
-    NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
-    return;
+    
+    if (err) {
+      if (textureRef) {
+        CFRelease(textureRef);
+      }
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+      return;
+    }
+    
+    // Bind texture, OpenGL already knows about the texture but it could have been created
+    // in another thread and it has to be bound in this context in order to sync the
+    // texture for use with this OpenGL context. The next logging line can be uncommented
+    // to see the actual texture id used internally by OpenGL.
+    
+    //NSLog(@"bind OpenGL texture %d", CVOpenGLESTextureGetName(textureRef));
+    
+    glBindTexture(CVOpenGLESTextureGetTarget(textureRef), CVOpenGLESTextureGetName(textureRef));
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+  } else {
+    // Y is an 8 bit texture
+    
+    glActiveTexture(GL_TEXTURE0);
+    
+    err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                       self->textureCacheRef,
+                                                       cvImageBufferRef,
+                                                       (CFDictionaryRef) NULL,
+                                                       GL_TEXTURE_2D, // not GL_RENDERBUFFER
+                                                       GL_RED_EXT,
+                                                       (GLsizei)frameWidth,
+                                                       (GLsizei)frameHeight,
+                                                       GL_RED_EXT,
+                                                       GL_UNSIGNED_BYTE,
+                                                       0,
+                                                       &textureRef);
+    
+    if (textureRef == NULL) {
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
+      return;
+    }
+    
+    if (err) {
+      if (textureRef) {
+        CFRelease(textureRef);
+      }
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+      return;
+    }
+    
+    //NSLog(@"bind OpenGL Y texture %d", CVOpenGLESTextureGetName(textureRef));
+    
+    glBindTexture(CVOpenGLESTextureGetTarget(textureRef), CVOpenGLESTextureGetName(textureRef));
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    // UV is an interleaved texture that is upsampled to the Y size in OpenGL
+    
+    glActiveTexture(GL_TEXTURE1);
+    
+    err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                       self->textureCacheRef,
+                                                       cvImageBufferRef,
+                                                       (CFDictionaryRef) NULL,
+                                                       GL_TEXTURE_2D, // not GL_RENDERBUFFER
+                                                       GL_RG_EXT,
+                                                       (GLsizei)frameWidth,
+                                                       (GLsizei)frameHeight,
+                                                       GL_RG_EXT,
+                                                       GL_UNSIGNED_BYTE,
+                                                       1,
+                                                       &textureUVRef);
+    
+    if (textureUVRef == NULL) {
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
+      return;
+    }
+    
+    if (err) {
+      if (textureUVRef) {
+        CFRelease(textureUVRef);
+      }
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+      return;
+    }
+    
+    //NSLog(@"bind OpenGL Y texture %d", CVOpenGLESTextureGetName(textureUVRef));
+    
+    glBindTexture(CVOpenGLESTextureGetTarget(textureUVRef), CVOpenGLESTextureGetName(textureUVRef));
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
   
-  // Bind texture, OpenGL already knows about the texture but it could have been created
-  // in another thread and it has to be bound in this context in order to sync the
-  // texture for use with this OpenGL context. The next logging line can be uncommented
-  // to see the actual texture id used internally by OpenGL.
-  
-  //NSLog(@"bind OpenGL texture %d", CVOpenGLESTextureGetName(textureRef));
-  
-  glBindTexture(CVOpenGLESTextureGetTarget(textureRef), CVOpenGLESTextureGetName(textureRef));
-  
-  // Set texture parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
   static const GLfloat squareVertices[] = {
     -1.0f, -1.0f,
     1.0f, -1.0f,
@@ -431,6 +612,10 @@ enum {
   
   CVOpenGLESTextureCacheFlush(self->textureCacheRef, 0);
   CFRelease(textureRef);
+  
+  if (textureUVRef) {
+    CFRelease(textureUVRef);
+  }
 }
 
 // drawRect from UIView, this method is invoked because this view extends GLKView
@@ -471,15 +656,26 @@ enum {
     return FALSE;
   }
   
+  const GLchar *vert;
+  const GLchar *frag;
+  
+  if (renderBGRA) {
+    vert = vertShaderBGRACstr;
+    frag = fragShaderBGRACstr;
+  } else {
+    vert = vertShaderYUVCstr;
+    frag = fragShaderYUVCstr;
+  }
+  
   // Create and compile vertex shader.
-  NSString *vertShaderStr = [NSString stringWithUTF8String:vertShaderCstr];
+  NSString *vertShaderStr = [NSString stringWithUTF8String:vert];
   if (![self compileShader:&vertShader type:GL_VERTEX_SHADER source:vertShaderStr]) {
     NSLog(@"Failed to compile vertex shader");
     return FALSE;
   }
   
   // Create and compile fragment shader.
-  NSString *fragShaderStr = [NSString stringWithUTF8String:fragShaderCstr];
+  NSString *fragShaderStr = [NSString stringWithUTF8String:frag];
   if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER source:fragShaderStr]) {
     NSLog(@"Failed to compile fragment shader");
     return FALSE;
@@ -518,6 +714,14 @@ enum {
   
   // Link textures to named textures variables in the shader program
 	//uniforms[UNIFORM_INDEXES] = glGetUniformLocation(passThroughProgram, "indexes");
+  
+  if (renderBGRA) {
+    
+  } else {
+    uniforms[UNIFORM_Y] = glGetUniformLocation(passThroughProgram, "SamplerY");
+    uniforms[UNIFORM_UV] = glGetUniformLocation(passThroughProgram, "SamplerUV");
+    uniforms[UNIFORM_COLOR_CONVERSION_MATRIX] = glGetUniformLocation(passThroughProgram, "colorConversionMatrix");
+  }
   
   // Release vertex and fragment shaders.
   if (vertShader) {
@@ -654,6 +858,15 @@ enum {
   
   frameDecoder = [AVAssetFrameDecoder aVAssetFrameDecoder];
   
+  // Configure frame decoder flags
+  
+  frameDecoder.produceCoreVideoPixelBuffers = TRUE;
+  
+  if (renderBGRA) {
+  } else {
+    frameDecoder.produceYUV420Buffers = TRUE;
+  }
+  
   self.frameDecoder = frameDecoder;
   
   // FIXME: deliver AVAnimatorFailedToLoadNotification in fail case
@@ -678,8 +891,6 @@ enum {
     return;
     //    return FALSE;
   }
-  
-  frameDecoder.produceCoreVideoPixelBuffers = TRUE;
   
   self.currentFrame = 0;
   
@@ -712,7 +923,7 @@ enum {
       
       strongSelf.currentFrame = nextFrame;
 
-      NSLog(@"set H264AlphaPlayer self.currentFrame to %d", strongSelf.currentFrame);
+      NSLog(@"set H264AlphaPlayer frames for (%d, %d), advance self.currentFrame to %d", strongSelf.currentFrame-2, strongSelf.currentFrame-1, strongSelf.currentFrame);
       
       [strongSelf setNeedsDisplay];
       
