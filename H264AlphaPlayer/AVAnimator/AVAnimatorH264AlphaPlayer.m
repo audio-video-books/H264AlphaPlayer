@@ -1123,7 +1123,7 @@ enum {
       NSAssert(alphaFrame, @"alphaFrame");
 #endif // DEBUG
       
-      __strong typeof(weakSelf) strongSelf = weakSelf;
+      __strong AVAnimatorH264AlphaPlayer *strongSelf = weakSelf;
       
       strongSelf.rgbFrame = rgbFrame;
       strongSelf.alphaFrame = alphaFrame;
