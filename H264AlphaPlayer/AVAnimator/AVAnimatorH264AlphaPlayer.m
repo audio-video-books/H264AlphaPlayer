@@ -43,8 +43,17 @@
 
 enum
 {
+  UNIFORM_BGRA_BGR,
+  UNIFORM_BGRA_A,
+  NUM_UNIFORMS_BGRA
+};
+GLint uniformsBGRA[NUM_UNIFORMS_BGRA];
+
+enum
+{
   UNIFORM_Y,
   UNIFORM_UV,
+  UNIFORM_A,
   UNIFORM_COLOR_CONVERSION_MATRIX,
   NUM_UNIFORMS
 };
@@ -82,9 +91,13 @@ static
 const GLchar *fragShaderBGRACstr =
 "varying highp vec2 coordinate;"
 "uniform sampler2D videoframe;"
+"uniform sampler2D alphaframe;"
 "void main()"
 "{"
-"	gl_FragColor = texture2D(videoframe, coordinate);"
+"  lowp vec4 rgb;"
+"  rgb = texture2D(videoframe, coordinate);"
+"  rgb.a = texture2D(alphaframe, coordinate).r;"
+"  gl_FragColor = rgb;"
 "}";
 
 static
@@ -103,16 +116,19 @@ const GLchar *fragShaderYUVCstr =
 "precision mediump float;"
 "uniform sampler2D SamplerY;"
 "uniform sampler2D SamplerUV;"
+"uniform sampler2D SamplerA;"
 "uniform mat3 colorConversionMatrix;"
 "void main()"
 "{"
 "  mediump vec3 yuv;"
 "  lowp vec3 rgb;"
+"  mediump float alpha;"
 // Subtract constants to map the video range start at 0
 "  yuv.x = (texture2D(SamplerY, coordinate).r - (16.0/255.0));"
 "  yuv.yz = (texture2D(SamplerUV, coordinate).rg - vec2(0.5, 0.5));"
 "  rgb = colorConversionMatrix * yuv;"
-"  gl_FragColor = vec4(rgb, 1);"
+"  alpha = texture2D(SamplerA, coordinate).r - (16.0/255.0);"
+"  gl_FragColor = vec4(rgb, alpha);"
 "}";
 
 enum {
@@ -260,7 +276,9 @@ enum {
   self.context = context;
 
   // FIXME: The opaque flag should be set to FALSE
-  self.opaque = TRUE;
+  //self.opaque = TRUE;
+  self.opaque = FALSE;
+  
   self.clearsContextBeforeDrawing = FALSE;
   self.backgroundColor = nil;
   
@@ -349,11 +367,13 @@ enum {
   // Update uniform values if there are any
   
   if (renderBGRA) {
-    // Nop
+    glUniform1i(uniformsBGRA[UNIFORM_BGRA_BGR], 0);
+    glUniform1i(uniformsBGRA[UNIFORM_BGRA_A], 1);
   } else {
     // 0 and 1 are the texture IDs of _lumaTexture and _chromaTexture respectively.
     glUniform1i(uniforms[UNIFORM_Y], 0);
     glUniform1i(uniforms[UNIFORM_UV], 1);
+    glUniform1i(uniforms[UNIFORM_A], 2);
     glUniformMatrix3fv(uniforms[UNIFORM_COLOR_CONVERSION_MATRIX], 1, GL_FALSE, _preferredConversion);
   }
   
@@ -401,6 +421,8 @@ enum {
   //NSLog(@"displayFrame %@", frame);
   
   CVImageBufferRef cvImageBufferRef = NULL;
+  
+  CVImageBufferRef cvAlphaImageBufferRef = NULL;
 
 	size_t frameWidth;
 	size_t frameHeight;
@@ -422,9 +444,16 @@ enum {
 
   cvImageBufferRef = rgbFrame.cvBufferRef;
   
+  cvAlphaImageBufferRef = alphaFrame.cvBufferRef;
+  
   frameWidth = CVPixelBufferGetWidth(cvImageBufferRef);
   frameHeight = CVPixelBufferGetHeight(cvImageBufferRef);
   bytesPerRow = CVPixelBufferGetBytesPerRow(cvImageBufferRef);
+  
+#if defined(DEBUG)
+  assert(frameWidth == CVPixelBufferGetWidth(cvAlphaImageBufferRef));
+  assert(frameHeight == CVPixelBufferGetHeight(cvAlphaImageBufferRef));
+#endif // DEBUG
   
   // Use the color attachment of the pixel buffer to determine the appropriate color conversion matrix.
   
@@ -458,10 +487,15 @@ enum {
   
   CVOpenGLESTextureRef textureUVRef = NULL;
   
+  CVOpenGLESTextureRef textureAlphaRef = NULL;
+  
   CVReturn err;
   
   if (renderBGRA) {
-    // A single BGRA format texture is created from the input buffer
+    
+    glActiveTexture(GL_TEXTURE0);
+    
+    // The RGB pixel values are stored in a BGRX frame
     
     err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                        self->textureCacheRef,
@@ -497,6 +531,52 @@ enum {
     //NSLog(@"bind OpenGL texture %d", CVOpenGLESTextureGetName(textureRef));
     
     glBindTexture(CVOpenGLESTextureGetTarget(textureRef), CVOpenGLESTextureGetName(textureRef));
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    // Second BGRA frame contains alpha channel encoded as Y component
+    // where the BGR values are all identical.
+    
+    glActiveTexture(GL_TEXTURE1);
+
+    err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                       self->textureCacheRef,
+                                                       cvAlphaImageBufferRef,
+                                                       (CFDictionaryRef) NULL,
+                                                       GL_TEXTURE_2D, // not GL_RENDERBUFFER
+                                                       GL_RGBA,
+                                                       (GLsizei)frameWidth,
+                                                       (GLsizei)frameHeight,
+                                                       GL_BGRA,
+                                                       GL_UNSIGNED_BYTE,
+                                                       0,
+                                                       &textureAlphaRef);
+    
+    if (textureAlphaRef == NULL) {
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
+      return;
+    }
+    
+    if (err) {
+      if (textureAlphaRef) {
+        CFRelease(textureAlphaRef);
+      }
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+      return;
+    }
+    
+    // Bind texture, OpenGL already knows about the texture but it could have been created
+    // in another thread and it has to be bound in this context in order to sync the
+    // texture for use with this OpenGL context. The next logging line can be uncommented
+    // to see the actual texture id used internally by OpenGL.
+    
+    //NSLog(@"bind OpenGL texture %d", CVOpenGLESTextureGetName(textureAlphaRef));
+    
+    glBindTexture(CVOpenGLESTextureGetTarget(textureAlphaRef), CVOpenGLESTextureGetName(textureAlphaRef));
     
     // Set texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -584,6 +664,46 @@ enum {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    // Alpha texture is another Y component buffer that is the full screen size
+    
+    glActiveTexture(GL_TEXTURE2);
+    
+    err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                       self->textureCacheRef,
+                                                       cvAlphaImageBufferRef,
+                                                       (CFDictionaryRef) NULL,
+                                                       GL_TEXTURE_2D, // not GL_RENDERBUFFER
+                                                       GL_RED_EXT,
+                                                       (GLsizei)frameWidth,
+                                                       (GLsizei)frameHeight,
+                                                       GL_RED_EXT,
+                                                       GL_UNSIGNED_BYTE,
+                                                       0,
+                                                       &textureAlphaRef);
+    
+    if (textureAlphaRef == NULL) {
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed and returned NULL (error: %d)", err);
+      return;
+    }
+    
+    if (err) {
+      if (textureAlphaRef) {
+        CFRelease(textureAlphaRef);
+      }
+      NSLog(@"CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+      return;
+    }
+    
+    //NSLog(@"bind OpenGL Y texture %d", CVOpenGLESTextureGetName(textureRef));
+    
+    glBindTexture(CVOpenGLESTextureGetTarget(textureAlphaRef), CVOpenGLESTextureGetName(textureAlphaRef));
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
   
   static const GLfloat squareVertices[] = {
@@ -615,6 +735,10 @@ enum {
   
   if (textureUVRef) {
     CFRelease(textureUVRef);
+  }
+  
+  if (textureAlphaRef) {
+    CFRelease(textureAlphaRef);
   }
 }
 
@@ -716,10 +840,12 @@ enum {
 	//uniforms[UNIFORM_INDEXES] = glGetUniformLocation(passThroughProgram, "indexes");
   
   if (renderBGRA) {
-    
+    uniformsBGRA[UNIFORM_BGRA_BGR] = glGetUniformLocation(passThroughProgram, "videoframe");
+    uniformsBGRA[UNIFORM_BGRA_A] = glGetUniformLocation(passThroughProgram, "alphaframe");
   } else {
     uniforms[UNIFORM_Y] = glGetUniformLocation(passThroughProgram, "SamplerY");
     uniforms[UNIFORM_UV] = glGetUniformLocation(passThroughProgram, "SamplerUV");
+    uniforms[UNIFORM_A] = glGetUniformLocation(passThroughProgram, "SamplerA");
     uniforms[UNIFORM_COLOR_CONVERSION_MATRIX] = glGetUniformLocation(passThroughProgram, "colorConversionMatrix");
   }
   
@@ -832,9 +958,6 @@ enum {
 }
 
 // Invoke this method to read from the named asset and being loading initial data
-
-// FIXME: all this CoreVideo texture buffer reading logic needs to be done on a
-// background thread.
 
 - (void) prepareToAnimate
 {
