@@ -50,7 +50,11 @@
   
 //  player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
 
-  player.assetFilename = @"AlphaTest_mix.m4v";
+//  player.assetFilename = @"AlphaTest_mix.m4v";
+
+  player.assetFilename = @"MultiTest_mix.m4v";
+  
+//  player.assetFilename = @"MatrixTest_mix.m4v";
   
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(animatorPreparedNotification:)
