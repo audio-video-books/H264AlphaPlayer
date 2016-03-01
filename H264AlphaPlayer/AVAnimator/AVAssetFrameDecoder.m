@@ -695,7 +695,7 @@ typedef enum
 - (AVFrame*) advanceToFrame:(NSUInteger)newFrameIndex
 {
 #ifdef LOGGING
-  NSLog(@"advanceToFrame : from %d to %d", frameIndex, newFrameIndex);
+  NSLog(@"advanceToFrame : from %d to %d", (int)frameIndex, (int)newFrameIndex);
 #endif // LOGGING
   
   // Check for case of restarting the decoder after it decoded all frames (looping)
@@ -734,7 +734,7 @@ typedef enum
     // possible to start asset decoding over now.
     
 #ifdef LOGGING
-    NSLog(@"RESTART condition when reading was finished found with frameIndex %d", self.frameIndex);
+    NSLog(@"RESTART condition when reading was finished found with frameIndex %d", (int)self.frameIndex);
 #endif // LOGGING
     
     [self restart];
@@ -767,7 +767,7 @@ typedef enum
   int skippingOverNumFrames = (int)(newFrameIndex - (frameIndex + 1));
   if (skippingAhead) {
 #ifdef LOGGING
-    NSLog(@"skipping ahead : current %d, new %d, skip %d", (frameIndex + 1), newFrameIndex, skippingOverNumFrames);
+    NSLog(@"skipping ahead : current %d, new %d, skip %d", (int)(frameIndex + 1), (int)newFrameIndex, (int)skippingOverNumFrames);
 #endif
   }
   
