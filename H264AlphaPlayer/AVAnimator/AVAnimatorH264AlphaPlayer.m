@@ -54,16 +54,16 @@ GLint uniforms[NUM_UNIFORMS];
 
 // BT.601, which is the standard for SDTV.
 static const GLfloat kColorConversion601[] = {
-		1.164,  1.164, 1.164,
+  1.164,  1.164, 1.164,
   0.0, -0.392, 2.017,
-		1.596, -0.813,   0.0,
+  1.596, -0.813,   0.0,
 };
 
 // BT.709, which is the standard for HDTV.
 static const GLfloat kColorConversion709[] = {
-		1.164,  1.164, 1.164,
+  1.164,  1.164, 1.164,
   0.0, -0.213, 2.112,
-		1.793, -0.533,   0.0,
+  1.793, -0.533,   0.0,
 };
 
 const static BOOL renderBGRA = FALSE;
@@ -555,8 +555,8 @@ enum {
                                                        (CFDictionaryRef) NULL,
                                                        GL_TEXTURE_2D, // not GL_RENDERBUFFER
                                                        GL_RG_EXT,
-                                                       (GLsizei)frameWidth,
-                                                       (GLsizei)frameHeight,
+                                                       (GLsizei)frameWidth/2,
+                                                       (GLsizei)frameHeight/2,
                                                        GL_RG_EXT,
                                                        GL_UNSIGNED_BYTE,
                                                        1,
