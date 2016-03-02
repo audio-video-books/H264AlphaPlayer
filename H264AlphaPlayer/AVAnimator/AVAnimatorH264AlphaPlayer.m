@@ -781,7 +781,7 @@ enum {
 
 #if defined(DEBUG)
   
-  if (self.captureDir != nil) {
+  if (self.captureDir != nil) @autoreleasepool {
     glFlush();
     glFinish();
 
