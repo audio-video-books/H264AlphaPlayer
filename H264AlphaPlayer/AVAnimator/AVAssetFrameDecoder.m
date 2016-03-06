@@ -524,9 +524,89 @@ typedef enum
   return [self renderCVImageBufferRefIntoFramebuffer:imageBuffer frameBuffer:frameBufferPtr];
 }
 
+// This method will determine if a CoreVideo image buffer contains YUV or BGRX video data and
+// convert from YUV to BGRX if needed.
+
 - (BOOL) renderCVImageBufferRefIntoFramebuffer:(CVImageBufferRef)imageBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
 {
+  int numPlanes = (int) CVPixelBufferGetPlaneCount(imageBuffer);
+  
+  if (numPlanes <= 1) {
+    // BGRA contents
+    return [self renderCVBGRAImageBufferRefIntoFramebuffer:imageBuffer frameBuffer:frameBufferPtr];
+  } else {
+    // YUV
+    
+    CIContext *context = [CIContext contextWithOptions:nil];
+
+    /*
+    EAGLContext *eaglContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    
+#if __has_feature(objc_arc)
+#else
+    eaglContext = [eaglContext autorelease];
+#endif // objc_arc
+    
+    [EAGLContext setCurrentContext:eaglContext];
+    
+    CIContext *context = [CIContext contextWithEAGLContext:eaglContext];
+     */
+    
+    assert(context);
+    
+//    CGColorSpaceRef colorSpace = (CGColorSpaceRef)CVBufferGetAttachment(imageBuffer,kCVImageBufferCGColorSpaceKey,NULL);
+    
+    CIImage *image = [CIImage imageWithCVPixelBuffer:imageBuffer];
+    
+    CIImage* outputImage = image;
+    
+//    CGImageRef cgImage = NULL;
+    
+    CGRect extent = [outputImage extent];
+    
+    //cgImage = [context createCGImage:outputImage fromRect:extent];
+    //CGImageRelease(cgImage);
+    
+    // OSType
+    // kCVPixelFormatType_444YpCbCr8 : 4:4:4
+    // kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+    // kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+    // kCVPixelFormatType_420YpCbCr8Planar
+    
+    CGSize size = extent.size;
+    CVPixelBufferRef conversionBuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault,
+                                          size.width,
+                                          size.height,
+                                          kCVPixelFormatType_32BGRA,
+                                          (__bridge CFDictionaryRef) @{
+                                                                       (__bridge NSString *)kCVPixelBufferIOSurfacePropertiesKey: @{},
+                                                                       (__bridge NSString *)kCVPixelFormatOpenGLESCompatibility : @(YES),
+                                                                       },
+                                          &conversionBuffer);
+    
+    if (status == kCVReturnSuccess) {
+      [context render:image toCVPixelBuffer:conversionBuffer];
+    }
+    
+    BOOL worked = [self renderCVBGRAImageBufferRefIntoFramebuffer:conversionBuffer frameBuffer:frameBufferPtr];
+    
+    CVPixelBufferRelease(conversionBuffer);
+
+    return worked;
+  }
+}
+
+// Render BGRA pixels in a CoreVideo image buffer as a flat BGRA framebuffer
+
+- (BOOL) renderCVBGRAImageBufferRefIntoFramebuffer:(CVImageBufferRef)imageBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
+{
   CGFrameBuffer *frameBuffer = *frameBufferPtr;
+  
+#if defined(DEBUG)
+  int numPlanes = (int) CVPixelBufferGetPlaneCount(imageBuffer);
+  assert(numPlanes <= 1);
+#endif // DEBUG
   
   CVPixelBufferLockBaseAddress(imageBuffer,0);
   
@@ -567,7 +647,12 @@ typedef enum
   CGDataProviderRef dataProvider =
   CGDataProviderCreateWithData(NULL, baseAddress, bufferSize, NULL);
   
-  CGImageRef cgImageRef = CGImageCreate(width, height, 8, 32, bytesPerRow,
+  size_t bitsPerComponent = 8;
+  size_t bitsPerPixel = 32;
+  
+  // Input should be BGRA pixels represented as a word buffer
+  
+  CGImageRef cgImageRef = CGImageCreate(width, height, bitsPerComponent, bitsPerPixel, bytesPerRow,
                                         colorSpace, kCGBitmapByteOrder32Host | kCGImageAlphaNoneSkipFirst,
                                         dataProvider, NULL, true, kCGRenderingIntentDefault);
   
