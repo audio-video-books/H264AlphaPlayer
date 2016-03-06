@@ -56,22 +56,27 @@
   
 //  player.assetFilename = @"MatrixTest_mix.m4v";
   
+//  player.assetFilename = @"RGBFrames32BPP_mix.m4v";
+  
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(animatorPreparedNotification:)
                                                name:AVAnimatorPreparedToAnimateNotification
+                                             object:player];
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(animatorStoppedNotification:)
+                                               name:AVAnimatorDidStopNotification
                                              object:player];
   
   [player prepareToAnimate];
 }
 
-// Invoked once a specific media object is ready to animate.
+// The prepared callback is invoked once the asset has been opened and the first frame
+// has been loaded into memory. Note that this prepared callback can be invoked multiple
+// times in the case looping the media playback is implemented.
 
 - (void)animatorPreparedNotification:(NSNotification*)notification {
   AVAnimatorH264AlphaPlayer *player = notification.object;
-  
-  [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                  name:AVAnimatorPreparedToAnimateNotification
-                                                object:player];
   
   AVAssetFrameDecoder *frameDecoder = (AVAssetFrameDecoder*) player.frameDecoder;
   NSString *file = player.assetFilename;
@@ -89,6 +94,18 @@
   [self.carView startAnimator];
   
   return;
+}
+
+// Invoked after animation playback has stopped
+
+- (void)animatorStoppedNotification:(NSNotification*)notification {
+  NSLog(@"animatorStoppedNotification");
+
+  // Kick off another animation cycle by doing a prepare operation which will open
+  // the asset resource and load the first frame of data. An asset based player
+  // needs to be reinitialized each time it is played.
+  
+  [self.carView prepareToAnimate];
 }
 
 @end

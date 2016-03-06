@@ -131,6 +131,8 @@
 		3C9DF3121C82909A00D96CE2 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF3111C82909A00D96CE2 /* libz.tbd */; };
 		3CBEDAE21C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
 		3CBEDAE31C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
+		3CCD61B91C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3CCD61B81C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v */; };
+		3CCD61BA1C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3CCD61B81C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -275,6 +277,7 @@
 		3C9DF3111C82909A00D96CE2 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		3CBEDAE01C82956C00627C71 /* AVAnimatorH264AlphaPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVAnimatorH264AlphaPlayer.h; sourceTree = "<group>"; };
 		3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AVAnimatorH264AlphaPlayer.m; sourceTree = "<group>"; };
+		3CCD61B81C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = RGBFrames32BPP_mix.m4v; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -336,6 +339,7 @@
 		3C9DF20B1C828FAF00D96CE2 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				3CCD61B81C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v */,
 				3C5240B51C8633A000FDF725 /* MatrixTest_mix.m4v */,
 				3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */,
 				3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */,
@@ -578,6 +582,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CCD61B91C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v in Resources */,
 				3C5240B61C8633A000FDF725 /* MatrixTest_mix.m4v in Resources */,
 				3C5240B31C86228200FDF725 /* MultiTest_mix.m4v in Resources */,
 				3C9DF21B1C828FAF00D96CE2 /* LaunchScreen.storyboard in Resources */,
@@ -592,6 +597,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CCD61BA1C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v in Resources */,
 				3C5240B41C86228200FDF725 /* MultiTest_mix.m4v in Resources */,
 				3C9DF2321C82901400D96CE2 /* low_car_ANI_mix_30_main.m4v in Resources */,
 				3C5240B71C8633A000FDF725 /* MatrixTest_mix.m4v in Resources */,

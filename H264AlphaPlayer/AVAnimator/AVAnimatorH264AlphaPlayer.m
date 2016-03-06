@@ -1099,6 +1099,17 @@ enum {
       });
       
     } // end of while (1) loop
+    
+    // Done with animation loop, deliver AVAnimatorDidStopNotification in main thread
+    
+    // FIXME: should this be a strong self ref?
+    
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      [self stopAnimator];
+      
+      [[NSNotificationCenter defaultCenter] postNotificationName:AVAnimatorDidStopNotification object:weakSelf];
+    });
+    
   });
 
 }
