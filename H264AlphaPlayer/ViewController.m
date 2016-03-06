@@ -32,23 +32,23 @@
   
   // Load white BG instead of green
   self.view.backgroundColor = [UIColor whiteColor];
-  self.view.backgroundColor = [UIColor redColor];
+  //self.view.backgroundColor = [UIColor redColor];
   
   //self.carView.backgroundColor = [UIColor greenColor];
   //self.carView.backgroundColor = [UIColor clearColor];
   
   AVAnimatorH264AlphaPlayer *player = self.carView;
   
-//#if defined(DEBUG)
-//  player.captureDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"Capture"];
-//#endif // DEBUG
+#if defined(DEBUG)
+  player.captureDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"Capture"];
+#endif // DEBUG
   
   // Note that the width x height of the view is not known at this point, because the view is being
   // loaded and it can be resized or rotated to fit initial app launch state.
   
 //  NSLog(@"self.carView %dx%d", (int)player.bounds.size.width, (int)player.bounds.size.height);
   
-  player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
+//  player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
 
 //  player.assetFilename = @"AlphaTest_mix.m4v";
 
@@ -56,7 +56,7 @@
   
 //  player.assetFilename = @"MatrixTest_mix.m4v";
   
-//  player.assetFilename = @"RGBFrames32BPP_mix.m4v";
+  player.assetFilename = @"RGBFrames32BPP_mix.m4v";
   
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(animatorPreparedNotification:)
@@ -91,7 +91,7 @@
   
   NSLog(@"self.carView : %d x %d", (int)self.carView.frame.size.width, (int)self.carView.frame.size.height);
   
-  [self.carView startAnimator];
+//  [self.carView startAnimator];
   
   return;
 }

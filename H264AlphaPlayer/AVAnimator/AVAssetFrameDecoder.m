@@ -71,8 +71,6 @@ typedef enum
 
 @property (nonatomic, retain) AVFrame *lastFrame;
 
-- (BOOL) renderIntoFramebuffer:(CMSampleBufferRef)sampleBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr;
-
 @end
 
 
@@ -386,7 +384,7 @@ typedef enum
       CFRetain(imageBufferRef);
       *cvBufferRefPtr = imageBufferRef;
     } else {
-      worked = [self renderIntoFramebuffer:sampleBuffer frameBuffer:frameBufferPtr];
+      worked = [self renderCMSampleBufferRefIntoFramebuffer:sampleBuffer frameBuffer:frameBufferPtr];
       NSAssert(worked, @"renderIntoFramebuffer worked");
     }
     
@@ -519,11 +517,16 @@ typedef enum
 // will make use of the same buffer. Note that the returned frameBuffer
 // object is placed in the autorelease pool implicitly.
 
-- (BOOL) renderIntoFramebuffer:(CMSampleBufferRef)sampleBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
+- (BOOL) renderCMSampleBufferRefIntoFramebuffer:(CMSampleBufferRef)sampleBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
+{
+  CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+  
+  return [self renderCVImageBufferRefIntoFramebuffer:imageBuffer frameBuffer:frameBufferPtr];
+}
+
+- (BOOL) renderCVImageBufferRefIntoFramebuffer:(CVImageBufferRef)imageBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
 {
   CGFrameBuffer *frameBuffer = *frameBufferPtr;
-  
-  CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
   
   CVPixelBufferLockBaseAddress(imageBuffer,0);
   
