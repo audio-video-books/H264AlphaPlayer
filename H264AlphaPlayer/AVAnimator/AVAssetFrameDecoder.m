@@ -545,6 +545,10 @@ typedef enum
 
 - (BOOL) renderCVYUVImageBufferRefIntoFramebuffer:(CVImageBufferRef)imageBuffer frameBuffer:(CGFrameBuffer**)frameBufferPtr
 {
+#if TARGET_IPHONE_SIMULATOR
+  // CoreImage does not support yuv420 pixels
+  assert(0);
+#else
   CIContext *context = [CIContext contextWithOptions:nil];
   NSAssert(context, @"CIContext");
   
@@ -575,6 +579,7 @@ typedef enum
   CVPixelBufferRelease(conversionBuffer);
   
   return worked;
+#endif // TARGET_IPHONE_SIMULATOR
 }
 
 // Render BGRA pixels in a CoreVideo image buffer as a flat BGRA framebuffer

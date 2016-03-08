@@ -1159,7 +1159,7 @@ enum {
   
   NSLog(@"set H264AlphaPlayer frames for (%d, %d), advance self.currentFrame to %d", self.currentFrame-2, self.currentFrame-1, self.currentFrame);
   
-#if defined(DEBUG)
+#if defined(DEBUG) && !TARGET_IPHONE_SIMULATOR
   const int dumpRGBFrame = 1;
   const int dumpAlphaFrame = 1;
   
