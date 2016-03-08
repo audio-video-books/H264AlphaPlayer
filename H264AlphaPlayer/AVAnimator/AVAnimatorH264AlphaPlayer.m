@@ -1277,7 +1277,12 @@ enum {
   __block int currentFrame = self.currentFrame;
   __block Class c = self.class;
   __block AVAssetFrameDecoder *frameDecoderBlock = frameDecoder;
-  __weak AVAnimatorH264AlphaPlayer *weakSelf = self;
+
+#if __has_feature(objc_arc)
+  __weak
+#else
+#endif // objc_arc
+  AVAnimatorH264AlphaPlayer *weakSelf = self;
   
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     // Execute on background thread with blocks API invocation
@@ -1296,7 +1301,11 @@ enum {
       NSAssert(alphaFrame, @"alphaFrame");
 #endif // DEBUG
       
-      __strong AVAnimatorH264AlphaPlayer *strongSelf = weakSelf;
+#if __has_feature(objc_arc)
+      __strong
+#else
+#endif // objc_arc
+      AVAnimatorH264AlphaPlayer *strongSelf = weakSelf;
       
       if (strongSelf.state == STOPPED) {
         // stopAnimator invoked after prepareToAnimate
