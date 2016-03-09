@@ -31,8 +31,8 @@
   NSAssert(self.carView.superview != nil, @"superview");
   
   // Load white BG instead of green
-  self.view.backgroundColor = [UIColor whiteColor];
-  //self.view.backgroundColor = [UIColor redColor];
+  //self.view.backgroundColor = [UIColor whiteColor];
+  self.view.backgroundColor = [UIColor redColor];
   
   //self.carView.backgroundColor = [UIColor greenColor];
   //self.carView.backgroundColor = [UIColor clearColor];
@@ -48,7 +48,7 @@
   
 //  NSLog(@"self.carView %dx%d", (int)player.bounds.size.width, (int)player.bounds.size.height);
   
-//  player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
+  player.assetFilename = @"low_car_ANI_mix_30_main.m4v";
 
 //  player.assetFilename = @"AlphaTest_mix.m4v";
 
@@ -56,7 +56,7 @@
   
 //  player.assetFilename = @"MatrixTest_mix.m4v";
   
-  player.assetFilename = @"RGBFrames32BPP_mix.m4v";
+//  player.assetFilename = @"RGBFrames32BPP_mix.m4v";
   
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(animatorPreparedNotification:)
@@ -91,7 +91,7 @@
   
   NSLog(@"self.carView : %d x %d", (int)self.carView.frame.size.width, (int)self.carView.frame.size.height);
   
-//  [self.carView startAnimator];
+  [self.carView startAnimator];
   
   return;
 }
