@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C28D8481C914412003C03AA /* Colorbands_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D8471C914412003C03AA /* Colorbands_mix.m4v */; };
+		3C28D84A1C914526003C03AA /* GrayGradient_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D8491C914526003C03AA /* GrayGradient_mix.m4v */; };
+		3C28D84C1C915442003C03AA /* GrayAlphaBlend_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D84B1C915442003C03AA /* GrayAlphaBlend_mix.m4v */; };
 		3C5240B11C854CE800FDF725 /* AlphaTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */; };
 		3C5240B31C86228200FDF725 /* MultiTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */; };
 		3C5240B41C86228200FDF725 /* MultiTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */; };
@@ -146,6 +149,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3C28D8471C914412003C03AA /* Colorbands_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = Colorbands_mix.m4v; sourceTree = "<group>"; };
+		3C28D8491C914526003C03AA /* GrayGradient_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = GrayGradient_mix.m4v; sourceTree = "<group>"; };
+		3C28D84B1C915442003C03AA /* GrayAlphaBlend_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = GrayAlphaBlend_mix.m4v; sourceTree = "<group>"; };
 		3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = AlphaTest_mix.m4v; sourceTree = "<group>"; };
 		3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = MultiTest_mix.m4v; sourceTree = "<group>"; };
 		3C5240B51C8633A000FDF725 /* MatrixTest_mix.m4v */ = {isa = PBXFileReference; lastKnownFileType = file; path = MatrixTest_mix.m4v; sourceTree = "<group>"; };
@@ -339,6 +345,9 @@
 		3C9DF20B1C828FAF00D96CE2 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				3C28D84B1C915442003C03AA /* GrayAlphaBlend_mix.m4v */,
+				3C28D8491C914526003C03AA /* GrayGradient_mix.m4v */,
+				3C28D8471C914412003C03AA /* Colorbands_mix.m4v */,
 				3CCD61B81C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v */,
 				3C5240B51C8633A000FDF725 /* MatrixTest_mix.m4v */,
 				3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */,
@@ -585,10 +594,13 @@
 				3CCD61B91C8CC76E004EF9F2 /* RGBFrames32BPP_mix.m4v in Resources */,
 				3C5240B61C8633A000FDF725 /* MatrixTest_mix.m4v in Resources */,
 				3C5240B31C86228200FDF725 /* MultiTest_mix.m4v in Resources */,
+				3C28D84A1C914526003C03AA /* GrayGradient_mix.m4v in Resources */,
 				3C9DF21B1C828FAF00D96CE2 /* LaunchScreen.storyboard in Resources */,
+				3C28D8481C914412003C03AA /* Colorbands_mix.m4v in Resources */,
 				3C9DF2311C82901400D96CE2 /* low_car_ANI_mix_30_main.m4v in Resources */,
 				3C9DF2181C828FAF00D96CE2 /* Assets.xcassets in Resources */,
 				3C5240B11C854CE800FDF725 /* AlphaTest_mix.m4v in Resources */,
+				3C28D84C1C915442003C03AA /* GrayAlphaBlend_mix.m4v in Resources */,
 				3C9DF2161C828FAF00D96CE2 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
