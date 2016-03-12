@@ -39,9 +39,9 @@
   
   AVAnimatorH264AlphaPlayer *player = self.carView;
   
-#if defined(DEBUG)
-  player.captureDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"Capture"];
-#endif // DEBUG
+//#if defined(DEBUG)
+//  player.captureDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"Capture"];
+//#endif // DEBUG
   
   // Note that the width x height of the view is not known at this point, because the view is being
   // loaded and it can be resized or rotated to fit initial app launch state.
