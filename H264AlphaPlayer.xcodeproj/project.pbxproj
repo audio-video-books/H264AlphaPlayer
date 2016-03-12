@@ -10,6 +10,8 @@
 		3C28D8481C914412003C03AA /* Colorbands_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D8471C914412003C03AA /* Colorbands_mix.m4v */; };
 		3C28D84A1C914526003C03AA /* GrayGradient_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D8491C914526003C03AA /* GrayGradient_mix.m4v */; };
 		3C28D84C1C915442003C03AA /* GrayAlphaBlend_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C28D84B1C915442003C03AA /* GrayAlphaBlend_mix.m4v */; };
+		3C28D84D1C921759003C03AA /* libcompression.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF30F1C82909400D96CE2 /* libcompression.tbd */; };
+		3C28D84E1C921760003C03AA /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF3111C82909A00D96CE2 /* libz.tbd */; };
 		3C5240B11C854CE800FDF725 /* AlphaTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B01C854CE800FDF725 /* AlphaTest_mix.m4v */; };
 		3C5240B31C86228200FDF725 /* MultiTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */; };
 		3C5240B41C86228200FDF725 /* MultiTest_mix.m4v in Resources */ = {isa = PBXBuildFile; fileRef = 3C5240B21C86228200FDF725 /* MultiTest_mix.m4v */; };
@@ -300,6 +302,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C28D84E1C921760003C03AA /* libz.tbd in Frameworks */,
+				3C28D84D1C921759003C03AA /* libcompression.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -811,7 +815,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -849,7 +853,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

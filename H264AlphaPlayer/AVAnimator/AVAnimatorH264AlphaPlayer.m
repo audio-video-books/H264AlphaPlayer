@@ -328,7 +328,9 @@ enum {
   // Use 2x scale factor on Retina displays.
   self.contentScaleFactor = [[UIScreen mainScreen] scale];
   
+  // Set to NO to indicate that application will force redraws
   self.enableSetNeedsDisplay = YES;
+//  self.enableSetNeedsDisplay = NO;
   
   self->passThroughProgram = 0;
   self->textureCacheRef = NULL;
@@ -851,6 +853,7 @@ enum {
 - (void)drawRect:(CGRect)rect
 {
   NSLog(@"drawRect %dx%d", (int)rect.size.width, (int)rect.size.height);
+  //NSLog(@"drawable width x height %dx%d", (int)self.drawableWidth, (int)self.drawableHeight);
   
   if (didSetupOpenGLMembers == FALSE) {
     didSetupOpenGLMembers = TRUE;
@@ -861,7 +864,7 @@ enum {
   if (self.rgbFrame != nil && self.alphaFrame != nil) {
     [self displayFrame];
   } else {
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0); // Fully transparent
     glClear(GL_COLOR_BUFFER_BIT);
   }
   return;
@@ -1050,6 +1053,10 @@ enum {
 
 - (void) startAnimator
 {
+#if defined(DEBUG)
+  assert([NSThread currentThread] == [NSThread mainThread]);
+#endif // DEBUG
+  
   if (self.rgbFrame == nil || self.alphaFrame == nil) {
     NSAssert(FALSE, @"player must be prepared before startAnimator can be invoked");
   }
@@ -1125,6 +1132,10 @@ enum {
 
 - (void) stopAnimator
 {
+#if defined(DEBUG)
+  assert([NSThread currentThread] == [NSThread mainThread]);
+#endif // DEBUG
+  
   self.rgbFrame = nil;
   self.alphaFrame = nil;
   
@@ -1135,6 +1146,10 @@ enum {
 
 - (void) prepareToAnimate
 {
+#if defined(DEBUG)
+  assert([NSThread currentThread] == [NSThread mainThread]);
+#endif // DEBUG
+  
   self.animatorPrepTimer = [NSTimer timerWithTimeInterval: 0.10
                                                    target: self
                                                  selector: @selector(_prepareToAnimateTimer:)
@@ -1229,7 +1244,11 @@ enum {
   }
 #endif // DEBUG
   
+  // [self setNeedsDisplay] when not using the display loop.
+  // [self display] would be invoked when explicitly drawing.
+  
   [self setNeedsDisplay];
+  //[self display];
 }
 
 // This timer callback method is invoked after the event loop is up and running in the
@@ -1336,7 +1355,7 @@ enum {
   AVFrame *rgbFrame;
   AVFrame *alphaFrame;
   
-  NSLog(@"advanceToFrame %d", currentFrame);
+  NSLog(@"advanceToFrame %d aka %d", currentFrame, currentFrame/2);
   
   rgbFrame = [frameDecoder advanceToFrame:currentFrame];
   currentFrame++;
