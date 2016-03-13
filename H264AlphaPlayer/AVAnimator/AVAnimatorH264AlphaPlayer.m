@@ -1227,6 +1227,10 @@ enum {
   
   // Redraw the display at known fixed interval of 30 FPS
   
+  if (debugDisplayLink) {
+  NSLog(@"called setNeedsDisplay");
+  }
+  
   [self setNeedsDisplay];
   
 //  if (lastDisplayLinkFrameOffset > 10) {
@@ -1305,6 +1309,8 @@ enum {
     AVFrame* rgbFrame;
     AVFrame* alphaFrame;
     
+    int lastDecodedFrame = -1;
+    
     __block NSDate *decodeWaitUntilDate = nil;
     
     while (1) @autoreleasepool {
@@ -1344,13 +1350,15 @@ enum {
       }
       
       if (debugDecodeFrames) {
-      NSLog(@"advanceToFrame %d (aka %d in combined frames)", currentFrame, currentFrame/2);
+      NSLog(@"advanceToFrame %d of %d (aka %d in combined frames)", currentFrame, maxFrame, currentFrame/2);
       }
       
       int nextFrame = [c loadFramesInBackgroundThread:currentFrame
                                          frameDecoder:frameDecoderBlock
                                              rgbFrame:&rgbFrame
                                            alphaFrame:&alphaFrame];
+      
+      lastDecodedFrame = currentFrame;
       
       dispatch_sync(dispatch_get_main_queue(), ^{
 #if defined(DEBUG)
@@ -1383,6 +1391,15 @@ enum {
             }
             
             currentFrame = nextRGBAlphaFrame;
+            
+            // Skip ahead, but don't skip over the last frame in the interval
+            
+            if (currentFrame >= maxFrame) {
+              int actualLastFrame = maxFrame - 2;
+              if (actualLastFrame != lastDecodedFrame) {
+                currentFrame = actualLastFrame;
+              }
+            }
           } else if (nextFrame > nextRGBAlphaFrame) {
             if (debugDecodeFrames) {
             NSLog(@"decoder currentFrame is ahead");
