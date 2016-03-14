@@ -1202,6 +1202,8 @@ enum {
 
 - (void) dispatchTimerFired
 {
+//  NSLog(@"dispatchTimerFired");
+  
 #if defined(DEBUG)
   assert([NSThread currentThread] != [NSThread mainThread]);
 #endif // DEBUG
@@ -1289,6 +1291,10 @@ enum {
   
   CFTimeInterval beforeTime = CACurrentMediaTime();
   
+  if ((1)) {
+    NSLog(@"decode start time       %0.5f", beforeTime);
+  }
+  
   int nextFrame = [self.class loadFramesInBackgroundThread:currentFrame
                                      frameDecoder:self.frameDecoder
                                          rgbFrame:&rgbFrame
@@ -1298,7 +1304,7 @@ enum {
   CFTimeInterval delta = afterTime - beforeTime;
   
   if ((1)) {
-    NSLog(@"decode start time       %0.5f", beforeTime);
+    NSLog(@"decode after time       %0.5f", afterTime);
     NSLog(@"decode delta %0.3f", delta);
   }
   
@@ -1331,19 +1337,25 @@ enum {
       
       if (nextFrame < nextRGBAlphaFrame) {
         if (debugDecodeFrames) {
-          NSLog(@"decoder currentFrame is behind by %d frames", (nextRGBAlphaFrame - nextFrame)/2);
+          NSLog(@"decoder currentFrame is behind by %d frames or %d combined frames", (nextRGBAlphaFrame - nextFrame), (nextRGBAlphaFrame - nextFrame)/2);
         }
         
+        int lastDecodedFrame = currentFrame;
         currentFrame = nextRGBAlphaFrame;
         
         // Skip ahead, but don't skip over the last frame in the interval
         
         if (currentFrame >= maxFrame) {
           int actualLastFrame = maxFrame - 2;
-          if (actualLastFrame != currentFrame) {
-            currentFrame = actualLastFrame;
-          } else {
+          if (lastDecodedFrame == actualLastFrame) {
+            // When the previously decoded frame was the last frame then
+            // decode cycle is completed.
+            
             aheadButReallyDone = 1;
+          } else {
+            // When skipping ahead, skip to the last frame in the animation cycle.
+            
+            currentFrame = actualLastFrame;
           }
         }
       }
@@ -1360,6 +1372,8 @@ enum {
     
     return TRUE;
   } else {
+    // Write currentFrame back to self.currentFrame
+    self.currentFrame = currentFrame;
     
     if (debugDecodeFrames) {
       NSLog(@"dispatchDecodeFrame : NOT done processing frames at %d", currentFrame);
