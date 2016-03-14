@@ -132,7 +132,6 @@
 		3C9DF30C1C82904A00D96CE2 /* 7zAlloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF2A21C82904A00D96CE2 /* 7zAlloc.c */; };
 		3C9DF30D1C82904A00D96CE2 /* 7zMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF2A41C82904A00D96CE2 /* 7zMain.c */; };
 		3C9DF30E1C82904A00D96CE2 /* 7zMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DF2A41C82904A00D96CE2 /* 7zMain.c */; };
-		3C9DF3101C82909400D96CE2 /* libcompression.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF30F1C82909400D96CE2 /* libcompression.tbd */; };
 		3C9DF3121C82909A00D96CE2 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C9DF3111C82909A00D96CE2 /* libz.tbd */; };
 		3CBEDAE21C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
 		3CBEDAE31C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CBEDAE11C82956C00627C71 /* AVAnimatorH264AlphaPlayer.m */; };
@@ -294,7 +293,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C9DF3121C82909A00D96CE2 /* libz.tbd in Frameworks */,
-				3C9DF3101C82909400D96CE2 /* libcompression.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -866,7 +864,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = H264AlphaPlayer/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.helpurock.H264AlphaPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -880,7 +878,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ENABLE_NS_ASSERTIONS = YES;
 				INFOPLIST_FILE = H264AlphaPlayer/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.helpurock.H264AlphaPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
