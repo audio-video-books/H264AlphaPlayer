@@ -497,21 +497,51 @@ enum {
 	return normalizedSamplingRect;
 }
 
-// Given an AVFrame object, map the pixels into a texture ref
+// Render the RGB and Alpha textures as the view via OpenGL draw
 
 - (void) displayFrame
 {
-  AVFrame *rgbFrame = self.rgbFrame;
-  NSAssert(rgbFrame.isDuplicate == FALSE, @"a duplicate frame should not cause a display update");
-  
-  AVFrame *alphaFrame = self.alphaFrame;
-  NSAssert(alphaFrame.isDuplicate == FALSE, @"a duplicate frame should not cause a display update");
-  
   //NSLog(@"displayFrame %@", frame);
   
-  CVImageBufferRef cvImageBufferRef = NULL;
+  AVFrame *rgbFrame = self.rgbFrame;
+  AVFrame *alphaFrame = self.alphaFrame;
   
+  // Weird case where putting app in background invokes this method and the frames are otherwise
+  // valid but the buffer refs are NULL.
+  
+  CVImageBufferRef cvImageBufferRef = NULL;
   CVImageBufferRef cvAlphaImageBufferRef = NULL;
+  
+  BOOL notReady = FALSE;
+  BOOL wasReadyButCoreVideoBuffersInvalidated = FALSE;
+  
+  if (rgbFrame == nil || alphaFrame == nil) {
+    notReady = TRUE;
+  }
+  
+  if (notReady == FALSE) {
+    cvImageBufferRef = rgbFrame.cvBufferRef;
+    cvAlphaImageBufferRef = alphaFrame.cvBufferRef;
+    
+    if ((cvImageBufferRef == NULL) || (cvAlphaImageBufferRef == NULL)) {
+      notReady = TRUE;
+      wasReadyButCoreVideoBuffersInvalidated = TRUE;
+    }
+  }
+  
+  if (wasReadyButCoreVideoBuffersInvalidated) {
+    // Nop, leave the existing cached render result as-is
+    
+    return;
+  } else if (notReady) {
+    glClearColor(0.0, 0.0, 0.0, 0.0); // Fully transparent
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    return;
+  }
+  
+  NSAssert(rgbFrame.isDuplicate == FALSE, @"a duplicate frame should not cause a display update");
+  NSAssert(alphaFrame.isDuplicate == FALSE, @"a duplicate frame should not cause a display update");
 
 	size_t frameWidth;
 	size_t frameHeight;
@@ -524,16 +554,12 @@ enum {
   // to support the non-optimal case since that would just cover up a configuration error
   // anyway.
   
-  if (rgbFrame.cvBufferRef == NULL) {
+  if (cvImageBufferRef == NULL) {
     NSAssert(FALSE, @"AVFrame delivered to AVAnimatorOpenGLView does not contain a CoreVideo pixel buffer");
   }
-  if (alphaFrame.cvBufferRef == NULL) {
+  if (cvAlphaImageBufferRef == NULL) {
     NSAssert(FALSE, @"AVFrame delivered to AVAnimatorOpenGLView does not contain a CoreVideo pixel buffer");
   }
-
-  cvImageBufferRef = rgbFrame.cvBufferRef;
-  
-  cvAlphaImageBufferRef = alphaFrame.cvBufferRef;
   
   frameWidth = CVPixelBufferGetWidth(cvImageBufferRef);
   frameHeight = CVPixelBufferGetHeight(cvImageBufferRef);
@@ -905,13 +931,7 @@ enum {
     NSAssert(worked, @"setupOpenGLMembers failed");
   }
   
-  if (self.rgbFrame != nil && self.alphaFrame != nil) {
-    [self displayFrame];
-  } else {
-    glClearColor(0.0, 0.0, 0.0, 0.0); // Fully transparent
-    glClear(GL_COLOR_BUFFER_BIT);
-  }
-  return;
+  [self displayFrame];
 }
 
 #pragma mark -  OpenGL ES 2 shader compilation
@@ -1278,7 +1298,7 @@ enum {
   CFTimeInterval delta = afterTime - beforeTime;
   
   if ((1)) {
-    NSLog(@"decode start time      : %0.5f", beforeTime);
+    NSLog(@"decode start time       %0.5f", beforeTime);
     NSLog(@"decode delta %0.3f", delta);
   }
   
@@ -1567,6 +1587,8 @@ enum {
     
     CVImageBufferRef cvBufferRef = rgbFrame.cvBufferRef;
     
+    if (cvBufferRef) {
+    
     int width = (int) CVPixelBufferGetWidth(rgbFrame.cvBufferRef);
     int height = (int) CVPixelBufferGetHeight(rgbFrame.cvBufferRef);
     
@@ -1587,6 +1609,8 @@ enum {
     [pngData writeToFile:tmpPNGPath atomically:YES];
     
     NSLog(@"wrote %@ at %d x %d", tmpPNGPath, width, height);
+      
+    }
   }
   
   if (dumpAlphaFrame) {
@@ -1597,6 +1621,8 @@ enum {
     AVFrame* alphaFrame = self.alphaFrame;
     
     CVImageBufferRef cvBufferRef = alphaFrame.cvBufferRef;
+    
+    if (cvBufferRef) {
     
     int width = (int) CVPixelBufferGetWidth(alphaFrame.cvBufferRef);
     int height = (int) CVPixelBufferGetHeight(alphaFrame.cvBufferRef);
@@ -1618,6 +1644,8 @@ enum {
     [pngData writeToFile:tmpPNGPath atomically:YES];
     
     NSLog(@"wrote %@ at %d x %d", tmpPNGPath, width, height);
+      
+    }
   }
 #endif // DEBUG
   
