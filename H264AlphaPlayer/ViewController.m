@@ -14,6 +14,8 @@
 
 @property (nonatomic, retain) IBOutlet AVAnimatorH264AlphaPlayer *carView;
 
+@property (nonatomic, assign) BOOL keepAnimating;
+
 @end
 
 @implementation ViewController
@@ -37,17 +39,7 @@
   //self.carView.backgroundColor = [UIColor greenColor];
   //self.carView.backgroundColor = [UIColor clearColor];
   
-  if (TRUE) {
-    // Cycle background color change animation to demonstrate alpha channel
-    
-    self.view.backgroundColor = [UIColor greenColor];
-    [UIView beginAnimations:nil context:NULL];
-    [UIView setAnimationDuration:5.0];
-    [UIView setAnimationRepeatCount:30];
-    [UIView setAnimationRepeatAutoreverses:TRUE];
-    self.view.backgroundColor = [UIColor whiteColor];
-    [UIView commitAnimations];
-  }
+  [self colorCycleAnimation];
   
   AVAnimatorH264AlphaPlayer *player = self.carView;
   
@@ -85,8 +77,35 @@
                                            selector:@selector(animatorStoppedNotification:)
                                                name:AVAnimatorDidStopNotification
                                              object:player];
+
+  // App foreground/background state
+  
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(willResignActiveNotification:)
+                                               name:UIApplicationWillResignActiveNotification
+                                             object:nil];
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(willResumeActiveNotification:)
+                                               name:UIApplicationWillEnterForegroundNotification
+                                             object:nil];
+
+  self.keepAnimating = TRUE;
   
   [player prepareToAnimate];
+}
+
+// Cycle background color change animation to demonstrate alpha channel
+
+- (void) colorCycleAnimation
+{
+  self.view.backgroundColor = [UIColor greenColor];
+  [UIView beginAnimations:nil context:NULL];
+  [UIView setAnimationDuration:5.0];
+  [UIView setAnimationRepeatCount:30];
+  [UIView setAnimationRepeatAutoreverses:TRUE];
+  self.view.backgroundColor = [UIColor whiteColor];
+  [UIView commitAnimations];
 }
 
 // The prepared callback is invoked once the asset has been opened and the first frame
@@ -118,12 +137,33 @@
 
 - (void)animatorStoppedNotification:(NSNotification*)notification {
   NSLog(@"animatorStoppedNotification");
-
+  
   // Kick off another animation cycle by doing a prepare operation which will open
   // the asset resource and load the first frame of data. An asset based player
   // needs to be reinitialized each time it is played.
   
+  if (self.keepAnimating) {
+    [self.carView prepareToAnimate];
+  }
+
+}
+
+// Invoked when app goes into background
+
+- (void)willResignActiveNotification:(NSNotification*)notification {
+  self.keepAnimating = FALSE;
+  [self.carView stopAnimator];
+}
+
+// Invoked when app goes from background to the foreground
+
+- (void)willResumeActiveNotification:(NSNotification*)notification {
+  self.keepAnimating = TRUE;
+  
+  // Playback must be started over when app comes back into the foregroeund
   [self.carView prepareToAnimate];
+  
+  [self colorCycleAnimation];
 }
 
 @end
