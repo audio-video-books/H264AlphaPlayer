@@ -32,10 +32,22 @@
   
   // Load white BG instead of green
   //self.view.backgroundColor = [UIColor whiteColor];
-  self.view.backgroundColor = [UIColor redColor];
+  //self.view.backgroundColor = [UIColor redColor];
   
   //self.carView.backgroundColor = [UIColor greenColor];
   //self.carView.backgroundColor = [UIColor clearColor];
+  
+  if (TRUE) {
+    // Cycle background color change animation to demonstrate alpha channel
+    
+    self.view.backgroundColor = [UIColor greenColor];
+    [UIView beginAnimations:nil context:NULL];
+    [UIView setAnimationDuration:5.0];
+    [UIView setAnimationRepeatCount:30];
+    [UIView setAnimationRepeatAutoreverses:TRUE];
+    self.view.backgroundColor = [UIColor whiteColor];
+    [UIView commitAnimations];
+  }
   
   AVAnimatorH264AlphaPlayer *player = self.carView;
   
