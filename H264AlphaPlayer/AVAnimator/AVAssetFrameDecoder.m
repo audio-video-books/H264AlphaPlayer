@@ -207,10 +207,21 @@ typedef enum
   
   float nominalFrameRate = videoTrack.nominalFrameRate;
   
-  float frameDuration = 1.0 / nominalFrameRate;
+  CMTime minFrameDuration = videoTrack.minFrameDuration;
+  
+  float frameDuration;
+  
+  if (CMTIME_IS_INVALID(minFrameDuration)) {
+    frameDuration = 1.0 / nominalFrameRate;
+  } else {
+    frameDuration = CMTimeGetSeconds(minFrameDuration);
+    nominalFrameRate = 1.0 / frameDuration;
+  }
+  
   self->m_frameDuration = (NSTimeInterval)frameDuration;
   
   float numFramesFloat = duration / frameDuration;
+  
   int numFrames = round( numFramesFloat );
   float durationForNumFrames = numFrames * frameDuration;
   float durationRemainder = duration - durationForNumFrames;
