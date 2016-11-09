@@ -590,15 +590,13 @@ enum {
     CFTypeRef colorAttachments = CVBufferGetAttachment(cvImageBufferRef, kCVImageBufferYCbCrMatrixKey, NULL);
     
 #if defined(DEBUG)
-    if (colorAttachments != NULL)
-    {
+    if (colorAttachments != NULL) {
       BOOL is240M = (CFStringCompare(colorAttachments, kCVImageBufferYCbCrMatrix_SMPTE_240M_1995, 0) == kCFCompareEqualTo);
       assert(is240M == 0);
     }
 #endif // DEBUG
     
-    if (colorAttachments == NULL || (CFStringCompare(colorAttachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo))
-    {
+    if (colorAttachments == NULL || (CFStringCompare(colorAttachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo)) {
       _preferredConversion = kColorConversion601;
     } else if (CFStringCompare(colorAttachments, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
       _preferredConversion = kColorConversion709;
