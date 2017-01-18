@@ -565,6 +565,7 @@
 				TargetAttributes = {
 					3C9DF2071C828FAF00D96CE2 = {
 						CreatedOnToolsVersion = 7.1.1;
+						DevelopmentTeam = 9F74CLHA49;
 					};
 					3C9DF2201C828FAF00D96CE2 = {
 						CreatedOnToolsVersion = 7.1.1;
@@ -867,6 +868,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 9F74CLHA49;
 				INFOPLIST_FILE = H264AlphaPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -880,6 +882,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 9F74CLHA49;
 				ENABLE_NS_ASSERTIONS = YES;
 				INFOPLIST_FILE = H264AlphaPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
